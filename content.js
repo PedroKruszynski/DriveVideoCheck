@@ -24,10 +24,17 @@
   }
 
   function isVideoRow(row) {
-    if (!row || row.getAttribute("role") !== "row" || row.closest("thead")) return false;
+    if (!row || row.getAttribute("role") !== "row" || row.closest("thead")) {
+      return false;
+    }
+    
     const name = getFileName(row);
-    if (name && VIDEO_EXTENSIONS.test(name)) return true;
+    if (name && VIDEO_EXTENSIONS.test(name)) {
+      return true;
+    }
+
     const iconTitle = row.querySelector("[data-file-icon] svg title");
+
     return Boolean(iconTitle && /^(vídeo|video)$/i.test(iconTitle.textContent.trim()));
   }
 
@@ -52,25 +59,31 @@
   }
 
   async function isWatched(fileId) {
-    if (stateCache.has(fileId)) return stateCache.get(fileId);
+    if (stateCache.has(fileId)) {
+      return stateCache.get(fileId);
+    }
+
     const value = await storageGet(STORAGE_PREFIX + fileId);
     stateCache.set(fileId, value);
+
     return value;
   }
 
   function updateVideoIcon(fileId, watched) {
-    if (!fileId) return;
+    if (!fileId) {
+      return;
+    }
 
-    // Drive commonly repeats the same file ID in the row and in its icon container.
     const matching = document.querySelectorAll(
       `[data-file-icon][data-id="${CSS.escape(fileId)}"]`
     );
 
     matching.forEach((iconContainer) => {
       const rect = iconContainer.querySelector("svg rect");
-      if (!rect) return;
+      if (!rect) {
+        return;
+      }
 
-      // Preserve the original icon color so it can be restored when unchecking.
       if (!rect.hasAttribute("data-dvt-original-fill")) {
         rect.setAttribute("data-dvt-original-fill", rect.getAttribute("fill") || "#FC413D");
       }
@@ -85,15 +98,18 @@
     const rows = Array.from(document.querySelectorAll('tr[role="row"][data-id]'));
     for (const row of rows) {
       if (!isVideoRow(row)) continue;
+
       const fileId = getFileId(row);
       if (!fileId) continue;
+
       const watched = await isWatched(fileId);
       updateVideoIcon(fileId, watched);
     }
   }
 
   function findOpenMenus() {
-    return Array.from(document.querySelectorAll('[role="menu"]'))
+    return Array.
+      from(document.querySelectorAll('[role="menu"]'))
       .filter(menu => menu.getClientRects().length > 0);
   }
 
@@ -126,12 +142,10 @@
       await storageSet(STORAGE_PREFIX + fileId, nextValue);
       updateVideoIcon(fileId, nextValue);
 
-      // Update the item immediately if the menu remains mounted.
       icon.textContent = nextValue ? "✓" : "□";
       label.textContent = nextValue ? "Marcar como não assistido" : "Marcar como assistido";
       item.setAttribute("aria-label", nextValue ? "Marcar como não assistido" : "Marcar como assistido");
 
-      // Close Drive's menu using Escape, without clicking a Drive action.
       document.dispatchEvent(new KeyboardEvent("keydown", {
         key: "Escape", code: "Escape", bubbles: true
       }));
@@ -141,32 +155,58 @@
   }
 
   async function injectIntoMenu(menu) {
-    if (!activeFile?.id || !activeFile.isVideo) return;
-    if (!menu.isConnected || menu.querySelector("." + MENU_ITEM_CLASS)) return;
+    if (!menu || !activeFile || !activeFile.isVideo) {
+      return;
+    }
 
-    const { id, name } = activeFile;
-    const watched = await isWatched(id);
-    if (!menu.isConnected || menu.querySelector("." + MENU_ITEM_CLASS)) return;
+    if (menu.querySelector(`.${MENU_ITEM_CLASS}`)) {
+      return;
+    }
 
-    const item = makeMenuItem(id, name, watched);
+    if (menu.parentElement?.closest('[role="menu"]')) {
+      return;
+    }
 
-    // Add a divider and menu item at the bottom of the open menu.
-    const divider = document.createElement("div");
-    divider.className = "dvt-menu-divider";
-    divider.setAttribute("role", "separator");
+    const fileId = activeFile.id;
+    const fileName = activeFile.name;
+    const watched = await isWatched(fileId);
 
-    menu.appendChild(divider);
+    if (!menu.isConnected || !activeFile || activeFile.id !== fileId) {
+      return;
+    }
+
+    if (menu.querySelector(`.${MENU_ITEM_CLASS}`)) {
+      return;
+    }
+    
+    const item = makeMenuItem(fileId, fileName, watched);
+    item.setAttribute("data-dvt-menu-item", "true");
+
     menu.appendChild(item);
   }
 
   function scanMenus() {
     scanQueued = false;
+
     const menus = findOpenMenus();
-    menus.forEach(menu => injectIntoMenu(menu));
+    if (!menus.length) {
+      return;
+    }
+
+    const mainMenu = menus.find(menu =>
+      !menu.parentElement?.closest('[role="menu"]')
+    );
+
+    if (mainMenu) {
+      void injectIntoMenu(mainMenu);
+    }
   }
 
   function scheduleScan() {
-    if (scanQueued) return;
+    if (scanQueued) {
+      return;
+    }
+    
     scanQueued = true;
     requestAnimationFrame(scanMenus);
   }
@@ -176,9 +216,15 @@
   }
 
   function rememberRow(row) {
-    if (!row) return;
+    if (!row) {
+      return;
+    }
+
     const id = getFileId(row);
-    if (!id) return;
+    if (!id) {
+      return;
+    }
+
     activeFile = {
       id,
       name: getFileName(row),
@@ -186,13 +232,16 @@
     };
   }
 
-  // Track the file before Drive opens its contextual menu.
   document.addEventListener("click", (event) => {
     const target = event.target instanceof Element ? event.target : null;
-    if (!target) return;
+    if (!target) {
+      return;
+    }
 
     const row = rowFromTarget(target);
-    if (!row) return;
+    if (!row) {
+      return;
+    }
 
     const actionButton = target.closest('button[aria-label*="Mais ações"], button[aria-label*="More actions"]');
     if (actionButton) {
