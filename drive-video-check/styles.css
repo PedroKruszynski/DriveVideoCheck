@@ -1,0 +1,41 @@
+.dvt-menu-item {
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  min-height: 40px !important;
+  padding: 0 12px !important;
+  gap: 12px !important;
+  color: var(--dt-on-surface, #202124) !important;
+  font-family: Roboto, Arial, sans-serif !important;
+  font-size: 14px !important;
+  line-height: 20px !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+  user-select: none !important;
+}
+
+.dvt-menu-item:hover,
+.dvt-menu-item:focus {
+  background: var(--dt-surface-container-high, #f1f3f4) !important;
+  outline: none !important;
+}
+
+.dvt-menu-icon {
+  display: inline-flex !important;
+  width: 20px !important;
+  min-width: 20px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #188038 !important;
+  font-size: 18px !important;
+}
+
+.dvt-menu-label {
+  flex: 1 !important;
+}
+
+.dvt-menu-divider {
+  height: 1px !important;
+  margin: 4px 0 !important;
+  background: var(--dt-outline-variant, #dadce0) !important;
+}
